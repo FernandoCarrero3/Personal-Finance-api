@@ -1,27 +1,27 @@
 from fastapi import APIRouter
 from app.models import Transaccion
+from app.utils import categorizar_transaccion  # 1. Importamos la función
 
-# 1. Inicializamos el Router (le ponemos un prefijo para no repetir "/transacciones" todo el rato)
 router = APIRouter(prefix="/transacciones", tags=["Transacciones"])
 
-# Traemos nuestra base de datos simulada aquí
 base_de_datos = []
 
-# 2. Las rutas ahora usan @router en lugar de @app
-# Fíjate que la ruta es "/" porque el prefijo ya añade "/transacciones"
 @router.get("/")
 def obtener_transacciones():
     return base_de_datos
 
 @router.post("/")
 def registrar_transaccion(transaccion: Transaccion):
+    # 2. Si el usuario no envió una categoría, usamos nuestro algoritmo para adivinarla
+    if transaccion.categoria == "Sin clasificar":
+        transaccion.categoria = categorizar_transaccion(transaccion.concepto)
+        
     base_de_datos.append(transaccion)
     return {
         "mensaje": "Transacción registrada con éxito",
         "transaccion": transaccion
     }
 
-# 3. La ruta de analíticas (quedará como /transacciones/analiticas)
 @router.get("/analiticas")
 def obtener_analiticas():
     total_gastos = sum(t.cantidad for t in base_de_datos)
